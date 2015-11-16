@@ -169,9 +169,7 @@ EventLoopGui : JITGui {
 		};
 
 		if (newState[\name] != prevState[\name]) {
-			zone.visible_(true);
 			taskGui.name_(newState[\name]);
-		//	this.parent.name_(object.asString);
 
 			// taskproxygui should do the name buttons
 			taskGui.nameBut.states_(
