@@ -76,10 +76,7 @@ EventLoop {
 	toggleLooped { this.looped_(this.looped.not) }
 
 	tempo { ^task.get(\tempo) }
-	tempo_ { |val|
-		task.set(\tempo, val);
-		task.clock.tempo_(val);
-	}
+	tempo_ { |val| task.set(\tempo, val); }
 
 	step { ^task.get(\step) }
 	step_ { |val| task.set(\step, val) }
@@ -142,8 +139,7 @@ EventLoop {
 						"i: % - ev: %".format(indexPlusOff, event).postln;
 					};
 
-					// (event[\playDur] / envir[\tempo]).wait;
-					 event[\playDur].wait;
+					(event[\playDur] / envir[\tempo]).wait;
 
 					index = (index + envir[\step]);
 					calcRange.value;
