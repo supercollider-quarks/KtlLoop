@@ -264,7 +264,7 @@ EventLoop {
 		task.stop.play;
 	}
 
-	togglePlay { if (task.isPlaying, { this.stop }, { this.play }); }
+	togglePlay { if (task.isActive, { this.stop }, { this.play }); }
 
 	stop {
 		if (verbosity > 0) { "  %.stop;\n".postf(this) };
@@ -274,6 +274,7 @@ EventLoop {
 	pause { task.pause; }
 	resume { task.resume; }
 	isPlaying { ^task.isPlaying; }
+	isActive { ^task.isActive; }
 
 	// could be more flexible
 	playOnce {
