@@ -1,4 +1,3 @@
-// replaces TimeLoop and descendants
 
 EventLoop {
 

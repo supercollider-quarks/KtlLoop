@@ -1,5 +1,4 @@
 
-
 EventLoopGui : JITGui {
 
 	classvar <defaultSpecs;
