@@ -107,6 +107,8 @@ EventLoop {
 				indexInRange = (index >= minIndex) and: { index <= maxIndex };
 			};
 
+			this.stopRec;
+
 			if (envir.verbosity > 0) {
 				(envir[\postname] + "plays list of % events and % secs.")
 				.format(list.size, list.totalDur.round(0.01)).postln;
