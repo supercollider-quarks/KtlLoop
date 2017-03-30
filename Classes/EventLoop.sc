@@ -4,6 +4,7 @@ EventLoop {
 	// for now, let all EventLoops live in one dict?
 	// subclasses can redirect to their own this.all
 	classvar <allEls;
+	classvar <ext = ".evl.scd";
 
 	var <key, <func;
 	var <list, <task, <isRecording = false;
@@ -13,6 +14,48 @@ EventLoop {
 	var <verbosity = 1;
 
 	var <lists, <currIndex = 0, <numLists = 0;
+
+	var <>folderName, <>storePath, <>toDisk = false;
+
+	defaultName { ^[this.class.name, this.key].join($_) }
+
+	fullPath { |path, folder|
+		storePath = path ? storePath ?? { thisProcess.nowExecutingPath.dirname };
+		folderName = folder ? folderName ?? { this.defaultName };
+		^storePath +/+ folderName;
+	}
+
+	storeLists { |path, folder|
+		lists.do { |l, i| this.writeList(i, path, folder) };
+	}
+
+	writeList { |index = 0, path, folder, name |
+		var fullPath = this.fullPath(path, folder);
+		var listToStore = lists[index];
+		File.mkdir(fullPath);
+		name = name ?? { this.defaultName ++ "_" ++ index ++ "_" ++ Date.getDate.stamp };
+		fullPath = fullPath +/+ (name ++ ext);
+		listToStore.writeCS(fullPath);
+	}
+
+
+	findLists { |path, folder|
+		^(this.fullPath(path, folder) +/+ "*" ++ ext).pathMatch;
+	}
+
+	readLists { |path, folder|
+		this.findLists(path, folder).do { |path|
+			this.readListFrom(path)
+		};
+	}
+
+	readListFrom { |path|
+		var res = path.load;
+		if (res.isKindOf(EventList)) {
+			list = res;
+			this.addList;
+		};
+	}
 
 	*initClass { allEls = () }
 
@@ -213,12 +256,11 @@ EventLoop {
 
 		isRecording = false;
 		list.finish(this.getAbsTime);
-		this.addList;
+		this.addList; if (toDisk) { this.writeList(0) };
 		recStartTime = nil;
 
 		if (verbosity > 0) {
-			"// % stopRec; // recorded list[%] with % events.\n".postf(
-				this, lists.lastIndex, lists.last.size)
+			"// % stopRec : recorded list[%] with % events.\n".postf(this, list.size)
 		};
 	}
 
@@ -290,7 +332,7 @@ EventLoop {
 	flip { this.step_(this.step.neg) }
 
 
-		// handling the lists
+	// handling the lists
 
 	addList {
 		if (list.notNil and: { list.notEmpty and: { lists.first !== list } }) {

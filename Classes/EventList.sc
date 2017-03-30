@@ -83,4 +83,18 @@ EventList : List {
 	restoreDurs {
 		this.setPlayDursToRelDur;
 	}
+
+	writeCS { |path|
+		var file;
+		if (path.pathMatch.size > 0) {
+			"% : file exists at path %.".postf(thisMethod, path);
+			^this
+		};
+		file = File(path, "w");
+		if (file.isOpen.not) {
+			"% : could not open file at path %.".postf(thisMethod, path);
+			^this
+		};
+		file.write(this.cs).close;
+	}
 }
