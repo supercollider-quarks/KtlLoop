@@ -13,7 +13,7 @@ EventLoop {
 
 	var <verbosity = 1;
 
-	var <lists, <currIndex = 0, <numLists = 0;
+	var <lists, <currIndex = 0;
 
 	var <>folderName, <>storePath, <>toDisk = false;
 
@@ -260,7 +260,8 @@ EventLoop {
 		recStartTime = nil;
 
 		if (verbosity > 0) {
-			"// % stopRec : recorded list[%] with % events.\n".postf(this, list.size)
+			"// % stopRec; // recorded list[%] with % events.\n".postf(
+				this, lists.lastIndex, lists.last.size)
 		};
 	}
 
@@ -335,9 +336,8 @@ EventLoop {
 	// handling the lists
 
 	addList {
-		if (list.notNil and: { list.notEmpty and: { lists.first !== list } }) {
-			lists.addFirst(list);
-			numLists = lists.size;
+		if (list.notNil and: { list.notEmpty and: { lists.last !== list } }) {
+			lists.add(list);
 		}
 	}
 
