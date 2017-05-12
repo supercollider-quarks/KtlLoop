@@ -140,5 +140,5 @@ if the recorded event is type \set, use it to KtlLoop.setuObj
 EXAMPLES::
 
 code::
-(some example code)
+(Quark("KtlLoop").localPath +/+ "examples/KtlLoop_MKtl_example.scd").openOS;
 ::
