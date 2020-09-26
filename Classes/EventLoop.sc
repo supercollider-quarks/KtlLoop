@@ -144,7 +144,6 @@ EventLoop {
 				minIndex = (envir[\lpStart] * lastIndex).round.asInteger;
 				indexRange = (envir[\range] * lastIndex).round.asInteger;
 				maxIndex = minIndex + indexRange;
-				// [minIndex, maxIndex, indexRange].postln;
 			};
 			var calcIndexInRange = {
 				indexInRange = (index >= minIndex) and: { index <= maxIndex };
@@ -162,6 +161,16 @@ EventLoop {
 			calcIndexInRange.value;
 
 			while { envir[\looped] or: indexInRange } {
+
+				// check that at least one of the selected events
+				// in current range has a playDur > 0
+				// wait 1 sec or
+				if (envir[\looped]) {
+					if (list.hasPositiveDur(minIndex, maxIndex).not) {
+						// "%: playTask safety-waits 1 sec...".postf(this);
+						1.wait;
+					};
+				};
 
 				indexOffset = (envir[\jitter].bilinrand * indexRange).round.asInteger;
 				indexPlusOff = (index + indexOffset).round.asInteger.wrap(minIndex, maxIndex);
@@ -336,7 +345,7 @@ EventLoop {
 	// handling the lists
 
 	addList {
-		if (list.notNil and: { list.notEmpty and: { lists.last !== list } }) {
+		if (list.notNil and: { list.size > 2 and: { lists.last !== list } }) {
 			lists.add(list);
 		}
 	}

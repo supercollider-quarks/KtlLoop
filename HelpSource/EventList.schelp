@@ -39,7 +39,7 @@ a.print; "";
 // name the keys to post first:
 a.print([\dur]); "";
 // and post the rest or not:
-a.print([\dur]);"";
+a.print([\dur], false);"";
 a.print([\absTime, \dur], true);"";
 a.print([\absTime, \dur], false);"";
 
@@ -102,3 +102,6 @@ in all events, calculate delta and dur values based on absTime values.
 METHOD:: setDursToDelta
 in all events, copy values for delta to dur key.
 
+Method:: hasPositiveDur
+check whether event range between minIndex and maxIndex has at least one positive playDur.
+this is used to avoid infinite loops when running in a play task.

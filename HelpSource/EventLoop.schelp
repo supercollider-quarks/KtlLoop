@@ -1,35 +1,35 @@
 TITLE:: EventLoop
-summary:: A list of recorded absolute and delta times.
+summary:: Play with lists of events with recorded absolute and delta times.
 categories:: Libraries>JITLib
 related:: Classes/KeyLoop, Classes/KeyPlayer, Classes/GamePad
 
 DESCRIPTION::
 
-EventLoop is the base class for several XLoop classes that can record any controller events (gesture capturing) and play them back flexibly. It aims to unify earlier such classes like CtLoop (in the GamePad quark), KeyPlayerRec (in the KeyPlayer quark), and others.
+EventLoop is the base class for several XLoop classes that can record any kind of events (such as note events, controller events from gesture capturing, key presses etc) and play them back flexibly. It aims to unify earlier such classes like CtLoop (in the GamePad quark), KeyPlayerRec (in the KeyPlayer quark), and others.
 
 EventLoop records events as
 list::
 ## a list of event times, absolute and relative, plus any extra arguments
 ## in playback, these times are scalable in tempo,
 ## quantizable to a total duration and a quant step
-## segments can be selected from it 
+## segments can be selected from it
 ## step size, playback direction and a jitter factor can also be set.
 
 ## it has function what to do on event time
-## it keeps multiple recorded lists 
+## it keeps multiple recorded lists
 ## the current list can be switched while playing
 ::
 
 code::
 
-// Simplest example: use EventLoop to record a Pbind
+// Simplest example: use EventLoop to record note events from a Pbind
 
 e = EventLoop(\e);
 e.startRec;
 
 (
 Pbind(
-	\note, Pbrown(0, 12, 1, 40),
+	\note, Pbrown(0, 12, 2, 40),
 	\dur, 0.125,
 	\rec, e
 ).play
@@ -38,23 +38,21 @@ Pbind(
 e.stopRec;
 e.listInfo;
 e.play;
+// print the recorded list
+e.list.print; "";
 
-e.list.print;
 
-
-
-	// more detail:
-
-	// make a EventLoop with a name and a func 
-	// the func expects numbers that work as degrees
+// More detailed example:
+// make a EventLoop with a name and a function
+// the function expects numbers that work as degrees in note events
 e = EventLoop(\u, { |ev| (degree: ev[\deg], dur: 0.1).play; });
 
-	// EventLoop expects lists of events, 
-	// which have an absTime entry, and arbitrary other info.
-	
-	// for example: add a list of ascending notes
-(	// (in typical use, the lists will be recorded in real time)
-fork { 
+// EventLoop contains lists of events,
+// which have an absTime entry, and arbitrary other info as key/value pairs.
+
+// for example: simulate real-time recording a list of ascending notes
+(
+fork {
 	e.startRec;		// adds a start event
 	e.recordEvent((deg: 0).postln); 1.wait;
 	e.recordEvent((deg: 1).postln); 1.wait;
@@ -64,31 +62,38 @@ fork {
 	e.recordEvent((deg: 5).postln); 0.2.wait;
 	e.recordEvent((deg: 6).postln); 0.22.wait;
 	e.recordEvent((deg: 7).postln); 0.28.wait;
-	e.stopRec;	
+	e.stopRec;
 };
 )
-	// u has the recorded list as current,
-	// and can play it
+// u has the recorded list as current,
+// and can play it
 e.play;
 e.looped_(true).play; // now loops
 
-	// change tempo
+// make a little player gui for e:
+EventLoopGui(e);
+
+// change tempo
 e.tempo_(1.5);
 e.tempo_(2);
 e.tempo_(1);
 
-	// quantize to a grid - not fully tested yet
-e.quantize(0.25, 4);
-e.quantize(0.125, 3);
-e.quantize(0.1666666, 4);
-e.unquantize;  
-
-	// change direction
+// change direction
 e.reverse;
-e.flip;
+e.forward;
+e.flip; // toggle direction
 e.forward;
 
-	// change range within loop:
+// quantize to a grid and totalDur
+// could be elaborated further
+e.quantize(0.25, 4);
+e.quantize(0.125, 3);
+e.quantize(1/6, 4);
+e.unquantize;
+
+e.list.hasPositiveDur(0,0);
+
+// change range within loop:
 e.range = 0.25;		// first quarter
 e.lpStart = 0.25;	// second quarter
 e.lpStart = 0.5;	// center 50%
@@ -96,32 +101,43 @@ e.range = 0.5;		// second half
 e.lpStart = 0.75;	// last quarter continues into first
 e.resetLoop;		// reset loop params
 
-	// jitter event order by % 
+e.list.hasPositiveDur(4, 3);
+// runtime safety tests:
+e.resetLoop;		// reset loop params
+e.range = 0.1;  // down to single element
+e.range = 0.05;  // down to single element
+e.range = 0.0;  // no elements - go to waiting loop
+e.range = -0.5; // constrain range to 0-1?
+e.lpStart = -pi; // shift/wrap
+
+// jitter event order by %
+e.resetLoop;		// reset loop params
 e.jitter = 0.25;
+
 e.jitter = 0.5;
 e.jitter = 0;
 e.resetLoop;
 
 
-    // if you record again, playback will stop
+// if you record again, playback will stop
 (
 fork {
-    e.startRec;
+	e.startRec;
 	10.do { |i|
-    	e.recordEvent((deg: i.neg + 7).postln); (1 / (i+1)).wait;
+		e.recordEvent((deg: i.neg + 7).postln); (1 / (i+1)).wait;
 	};
-    e.stopRec;    
+	e.stopRec;
 };
 )
 e.play;
 
-	// switch between the two lists 
+// switch between the two lists
 e.setList(0); // the newest
 e.setList(1); // back in time
 
 ::
 
-Its subclasses add features: 
+Its subclasses add features:
 
 KeyLoop - events by keys
 
@@ -166,7 +182,7 @@ start recording. if instant = true, recording starts instantly;
 otherwise, recording will start with the first recorded event.
 
 METHOD:: recordEvent
-record a new event into the list. 
+record a new event into the list.
 event will consist of [abstime, deltatime ] ++ ... args provided
 
 METHOD:: stopRec
@@ -179,7 +195,7 @@ METHOD:: isRecording
 flag whether EventLoop is currently recording
 
 METHOD:: getTimes
-get current absolute and delta recording times 
+get current absolute and delta recording times
 
 METHOD:: addList
 add the current list to the lists, e.g. after recording.
@@ -197,7 +213,7 @@ METHOD:: pause, resume
 pause and resume the playback taskproxy
 
 METHOD:: stop
-stop the playback taskproxy 
+stop the playback taskproxy
 
 METHOD:: togglePlay
 toggle between play and stop
@@ -289,68 +305,68 @@ EXAMPLES::
 
 code::
 
-	// Construct long example of EventList use by hand:
+// Construct long example of EventList use by hand:
 
-    // make a EventLoop with a name and a func 
-    // the func expects numbers that work as degrees
+// make a EventLoop with a name and a func
+// the func expects numbers that work as degrees
 e = EventLoop(\u, { |ev| (degree: ev[\deg], dur: 0.1).play; });
 
-    // EventLoop expects lists of events, 
-    // which have an absTime entry, and arbitrary other info.
-    
-    // for example: add a list of ascending notes
-    // (in actual use, the lists will be recorded)
+// EventLoop expects lists of events,
+// which have an absTime entry, and arbitrary other info.
+
+// for example: add a list of ascending notes
+// (in actual use, the lists will be recorded)
 l = EventList[
-    (absTime: 0, type: \start), // required start event
-    (absTime: 0, deg: 0), 
-    (absTime: 1, deg: 1), 
-    (absTime: 2, deg: 2), 
-    (absTime: 2.5, deg: 3), 
-    (absTime: 3, deg: 4), 
-    (absTime: 3.25, deg: 5), 
-    (absTime: 3.5, deg: 6), 
-    (absTime: 3.75, deg: 7), 
-    (absTime: 3.875, deg: 8),
-    (absTime: 4, type: \end)	// required end event
+	(absTime: 0, type: \start), // required start event
+	(absTime: 0, deg: 0),
+	(absTime: 1, deg: 1),
+	(absTime: 2, deg: 2),
+	(absTime: 2.5, deg: 3),
+	(absTime: 3, deg: 4),
+	(absTime: 3.25, deg: 5),
+	(absTime: 3.5, deg: 6),
+	(absTime: 3.75, deg: 7),
+	(absTime: 3.875, deg: 8),
+	(absTime: 4, type: \end)	// required end event
 ];
 
 l.calcDeltas;	// now add delta and dur times into the events
 l.print;		// print in readable order
 
-	// make l the current list of EventLoop u: 
-e.list = l; 
-	// add the current list to the beginning of the recorded lists 
-e.addList; 
+// make l the current list of EventLoop u:
+e.list = l;
+// add the current list to the beginning of the recorded lists
+e.addList;
 
-	// now play the events in the list, 
-	// with the task in EventLoop u calling its function:
+// now play the events in the list,
+// with the task in EventLoop u calling its function:
 e.play;
-	// stops after first time, unless:
+// stops after first time, unless:
 e.looped_(true).play; // now loops
 
 
-		EXAMPLE 2 // record rhythm only, play by hand
+EXAMPLE 2 // record rhythm only, play by hand
 
-// a sound to use		
+// a sound to use
 (
 SynthDef(\toc, {
-Out.ar(0, XLine.ar(1, 0.01, 0.02, doneAction: 2)
-* SinOsc.ar([600, 1300, 4500], 0, [0.3, 0.2, 0.1]).postln);
+	Out.ar(0, XLine.ar(1, 0.01, 0.02, doneAction: 2)
+		* SinOsc.ar([600, 1300, 4500], 0, [0.3, 0.2, 0.1]).postln);
 }).add;
 )
 
 (instrument: \toc).play;
 
-	// get more info posted
+// get more info posted
 e.verbosity = 2;
 
 e.startRec;
-	// run this line this multiple times, in some rhythm
+// run this line this multiple times, in some rhythm
 e.recordEvent; (instrument: \toc).play;
 
 e.stopRec;
 
-	// post info on the recorded list
+// post info on the recorded list
 e.listInfo;
 e.printLists;
 
@@ -361,5 +377,5 @@ z.tempo = 0.5;
 z.tempo = 2;
 z.tempo = 1;
 
-/// etc 
+/// etc
 ::

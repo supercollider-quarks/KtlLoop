@@ -51,6 +51,14 @@ EventList : List {
 		this.setPlayDursToRelDur;
 	}
 
+	hasPositiveDur { |minIndex = 0, maxIndex|
+		maxIndex = maxIndex ?? { this.lastIndex - 1 };
+		if (maxIndex < minIndex) {
+			^false
+		};
+		^(minIndex .. maxIndex).any { |index| this.at(index).playDur > 0 }
+	}
+
 	setRelDurInPrev { |newEvent, newIndex|
 		var prevEvent;
 		newIndex = newIndex ?? { array.indexOf(newEvent) };
